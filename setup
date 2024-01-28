@@ -1,0 +1,90 @@
+#!/bin/bash
+#
+#
+# Setting up options
+optupdate="Y"
+opti3="Y"
+optneovim="Y"
+
+checkInput () {
+	if [[ "$1" != "n" && "$1" != "" ]]; then
+		printf "Invalid input!!"
+		exit 1;
+	fi
+}
+
+printf "Update and upgrade packages (Y/n)? ";
+read optupdate;
+checkInput $optupdate
+
+printf "Setup i3(conky, statusbar, tmux included) (Y/n)? "
+read opti3;
+checkInput $opti3
+
+printf "Setup neovim? (Y/n) "
+read optneovim
+checkInput $optneovim
+
+printf "hello world $optupdate $opti3 $optneovim"
+
+# First we check if the required directories exist
+if [[ ! -d "~/.config" ]] then
+	echo "'~/.config/' does not exist..."
+	mkdir ~/.config
+else
+	echo "'~/.config/' exists..."
+fi
+
+if [[ ! -d "~/Desktop" ]] then
+	echo "'~/Desktop/' does not exist..."
+	mkdir ~/Desktop
+else
+	echo "'~/Desktop/' exists..."
+fi
+
+# Start the setup
+
+## Update and upgrade?
+if [[ "$optupdate" == "Y" ]]; then
+	echo "Update and upgrade..."
+	sudo pacman -Syu
+fi
+
+if [[ "$opti3" == "Y" ]]; then
+	echo "Install i3, i3status, conky, tmux and alacritty"
+	sudo pacman -S i3-gaps i3status conky tmux alacritty
+
+	# Get Desktop dependencies
+	echo "Cloning i3mine and tmux-config from Winter's repos"
+	cd ~/Desktop
+	git clone https://github.com/WinterSunset95/i3mine
+	git clone https://github.com/WinterSunset95/tmux-config
+
+	# Get .config dependencies
+	echo "Cloning conky, alacritty and i3 configs from Winter's repos"
+	cd ~/.config
+	git clone https://github.com/WinterSunset95/conky
+	git clone https://github.com/WinterSunset95/alacritty
+	git clone https://github.com/WinterSunset95/i3
+
+	# Link dependencies
+	echo "Link tmux conf"
+	cd ~/
+	ln -sf ~/Desktop/tmux-config/tmux.conf .tmux.conf
+
+	# Tmux plugin manager
+	echo "Install tmux plugin manager"
+	git clone https://github.com/tmux-plugins/tpm ~/.tmux/plugins/tpm
+	cd
+fi
+
+if [[ "$optneovim" == "Y" ]] then
+	echo "Clone neovim configs"
+	cd ~/.config
+	git clone https://github.com/WinterSunset95/neovim-mini ~/.config/nvim
+	echo "Install packer"
+	git clone --depth 1 https://github.com/wbthomason/packer.nvim\
+ ~/.local/share/nvim/site/pack/packer/start/packer.nvim
+fi
+
+echo "Setup script complete"
